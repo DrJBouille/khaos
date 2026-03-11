@@ -1,0 +1,10 @@
+{
+  "name": "@khaos/khaos-e2e",
+  "version": "0.0.1",
+  "private": true,
+  "nx": {
+    "implicitDependencies": [
+      "@khaos/khaos"
+    ]
+  }
+}
