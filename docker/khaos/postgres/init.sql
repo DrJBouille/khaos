@@ -1,0 +1,27 @@
+-- khaos DB
+CREATE DATABASE khaos;
+
+-- Create backend user
+CREATE USER admin_user WITH ENCRYPTED PASSWORD 'admin';
+GRANT ALL PRIVILEGES ON DATABASE khaos TO admin_user;
+GRANT ALL ON SCHEMA public TO admin_user;
+ALTER SCHEMA public OWNER TO admin_user;
+ALTER DATABASE khaos OWNER TO admin_user;
+
+USE khaos;
+
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+CREATE TYPE IF NOT EXISTS task_status AS ENUM ('PENDING', 'RUNNING','FINISHED','FAILED','CANCELLED');
+
+CREATE TABLE IF NOT EXISTS tasks (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  docker_process_id TEXT NOT NULL,
+  status task_status DEFAULT 'PENDING',
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS sessions (
+  id SERIAL PRIMARY KEY
+);

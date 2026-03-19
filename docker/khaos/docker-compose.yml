@@ -1,0 +1,29 @@
+services:
+  postgres:
+    image: postgres:${POSTGRES_VERSION}
+    container_name: ${POSTGRES_NAME}
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - khaos_pg_data:/var/lib/postgresql/data
+      - ./postgres:/docker-entrypoint-initdb.d
+    ports:
+      - "${POSTGRES_PORT}:5432"
+
+  redis:
+    image: redis/redis-stack:${REDIS_VERSION}
+    container_name: ${REDIS_NAME}
+    expose:
+      - 6379
+      - 8001
+    command: [ "/entrypoint.sh", "./redis-stack.conf" ]
+    healthcheck:
+      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
+    volumes:
+      - khaos_redis_data:/data
+
+volumes:
+  khaos_pg_data:
+  khaos_redis_data:

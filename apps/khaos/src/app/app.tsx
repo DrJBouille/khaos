@@ -1,45 +1,80 @@
-// Uncomment this line to use CSS modules
-// import styles from './app.module.css';
-import NxWelcome from "./nx-welcome";
+import {Editor} from "@monaco-editor/react";
+import {useEffect, useState} from "react";
+import SimpleSelect from "./shared/form/select/simple-select";
+import {SelectElement} from "./shared/form/select/type/SelectElement";
+import {TaskDTO} from "./service/data/TaskDTO";
+import {getTaskByID, runTask} from "./service/task-service";
+import BlackButton from "./shared/button/black-button";
+import {taskSignalingService} from "./service/task-signaling-service";
+import {TaskResponse} from "./service/data/TaskReponse";
+import Status from "./shared/status/status";
+import {STATUS} from "./shared/status/type/StatusColor";
 
-import { Route, Routes, Link } from 'react-router-dom';
+const languages: SelectElement[] = [
+  {name: "Javascript", value: "JAVASCRIPT"},
+  {name: "Python", value: "PYTHON"},
+];
 
 export function App() {
+  const [language, setLanguage] = useState("JAVASCRIPT");
+  const [code, setCode] = useState("console.log(\"Hello world !\")");
+  const [output, setOutput] = useState("");
+  const [error, setError] = useState("");
+  const [status, setStatus] = useState<STATUS>();
+
+  useEffect(() => {
+    taskSignalingService.onMessage(updateData);
+
+    return () => {
+      taskSignalingService.disconnect();
+    };
+  }, []);
+
+  const updateData = (data: TaskResponse) => {
+    setOutput(data.output);
+    setError(data.error);
+    setStatus(data.status);
+  }
+
+  const run = () => {
+    if (status === "RUNNING") return;
+
+    taskSignalingService.disconnect();
+
+    const taskDTO: TaskDTO = {code, language};
+
+    runTask(taskDTO).then(response => {
+      taskSignalingService.connect(response.id);
+      getTaskByID(response.id).then(updateData);
+    });
+  }
+
   return (
-    <div>
-      <NxWelcome title="@khaos/khaos"/>
-    
-    {/* START: routes */}
-    {/* These routes and navigation have been generated for you */}
-    {/* Feel free to move and update them to fit your needs */}
-    <br/>
-    <hr/>
-    <br/>
-    <div role="navigation">
-      <ul>
-        <li><Link to="/">Home</Link></li>
-        <li><Link to="/page-2">Page 2</Link></li>
-      </ul>
-    </div>
-    <Routes>
-      <Route
-        path="/"
-        element={
-          <div>This is the generated root route. <Link to="/page-2">Click here for page 2.</Link></div>
+    <div className={"w-screen h-screen grid grid-cols-3 gap-4 p-4 text-gray-800"}>
+      <div className={"max-h-full col-span-2 border border-zinc-900 rounded-lg overflow-hidden"}>
+        <Editor language={language.toLowerCase()} value={code} onChange={(value) => setCode(value ?? "")}/>
+      </div>
+      <div className={"flex flex-col gap-4"}>
+        <div className="flex gap-4">
+          <SimpleSelect elements={languages} onChange={setLanguage}/>
+          <div className={"w-1/5"}><BlackButton onClick={run} text="Run"/></div>
+        </div>
+
+        {status && <Status status={status}/>}
+
+        <pre className="w-full flex-1 border border-zinc-900 rounded p-4 h-64 overflow-scroll">
+          {output}
+        </pre>
+
+        {error != "" &&
+          <pre className="w-full flex-1 border border-zinc-900 rounded text-red-600 p-4 h-64 overflow-scroll">
+            {error}
+          </pre>
         }
-      />
-      <Route
-        path="/page-2"
-        element={
-          <div><Link to="/">Click here to go back to root page.</Link></div>
-        }
-      />
-    </Routes>
-    {/* END: routes */}
+      </div>
     </div>
   );
 }
 
 export default App;
-
 

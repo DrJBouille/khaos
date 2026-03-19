@@ -1,0 +1,85 @@
+{
+  "name": "khaos-communication",
+  "root": "apps/khaos-communication",
+  "sourceRoot": "apps/khaos-communication/src",
+  "projectType": "application",
+  "targets": {
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "parallel": false
+      },
+      "configurations": {
+        "linux": {
+          "commands": [
+            "cd docker/khaos && docker compose down -v",
+            "cd docker/khaos && docker compose up -d --build",
+            "./gradlew quarkusDev -p apps/khaos-communication"
+          ]
+        },
+        "windows": {
+          "commands": [
+            "cd docker/khaos && docker compose down -v",
+            "cd docker/khaos && docker compose up -d --build",
+            "gradle quarkusDev -p apps/khaos-communication"
+          ]
+        }
+      }
+    },
+    "simple-start": {
+      "executor": "nx:run-commands",
+      "options": {
+        "parallel": false
+      },
+      "configurations": {
+        "linux": {
+          "commands": [
+            "./gradlew quarkusDev -p apps/khaos-communication"
+          ]
+        },
+        "windows": {
+          "commands": [
+            "gradle quarkusDev -p apps/khaos-communication"
+          ]
+        }
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "parallel": false
+      },
+      "configurations": {
+        "linux": {
+          "commands": [
+            "./gradlew clean build -p apps/khaos-communication"
+          ]
+        },
+        "windows": {
+          "commands": [
+            "gradle clean build -p apps/khaos-communication"
+          ]
+        }
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "parallel": false
+      },
+      "configurations": {
+        "linux": {
+          "commands": [
+            "./gradlew test -p apps/khaos-communication"
+          ]
+        },
+        "windows": {
+          "commands": [
+            "gradle test -p apps/khaos-communication"
+          ]
+        }
+      }
+    }
+  },
+  "tags": ["api", "quarkus"]
+}
