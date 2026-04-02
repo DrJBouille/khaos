@@ -1,0 +1,85 @@
+{
+  "name": "execution-service",
+  "root": "apps/api/execution-service",
+  "sourceRoot": "apps/api/execution-service/src",
+  "projectType": "application",
+  "targets": {
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "parallel": false
+      },
+      "configurations": {
+        "linux": {
+          "commands": [
+            "cd docker/khaos && docker compose down -v",
+            "cd docker/khaos && docker compose up -d --build",
+            "./gradlew bootRun -p apps/api/execution-service"
+          ]
+        },
+        "windows": {
+          "commands": [
+            "cd docker/khaos && docker compose down -v",
+            "cd docker/khaos && docker compose up -d --build",
+            "gradle bootRun -p apps/api/execution-service"
+          ]
+        }
+      }
+    },
+    "simple-start": {
+      "executor": "nx:run-commands",
+      "options": {
+        "parallel": false
+      },
+      "configurations": {
+        "linux": {
+          "commands": [
+            "./gradlew bootRun -p apps/api/execution-service"
+          ]
+        },
+        "windows": {
+          "commands": [
+            "gradle bootRun -p apps/api/execution-service"
+          ]
+        }
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "parallel": false
+      },
+      "configurations": {
+        "linux": {
+          "commands": [
+            "./gradlew clean build -p apps/api/execution-service"
+          ]
+        },
+        "windows": {
+          "commands": [
+            "gradle clean build -p apps/api/execution-service"
+          ]
+        }
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "parallel": false
+      },
+      "configurations": {
+        "linux": {
+          "commands": [
+            "./gradlew test -p apps/api/execution-service"
+          ]
+        },
+        "windows": {
+          "commands": [
+            "gradle test -p apps/api/execution-service"
+          ]
+        }
+      }
+    }
+  },
+  "tags": ["api", "spring"]
+}

@@ -1,0 +1,33 @@
+{
+  "name": "khaos",
+  "root": ".",
+  "projectType": "application",
+  "targets": {
+    "serve:all": {
+      "executor": "nx:run-commands",
+      "options": {
+        "parallel": false
+      },
+      "configurations": {
+        "linux": {
+          "commands": [
+            "cd docker/khaos && docker compose down -v",
+            "cd docker/khaos && docker compose up -d --build",
+            "./gradlew bootRun -p apps/api/execution-service &",
+            "sleep 20 && nx serve worker-go &",
+            "sleep 5 && nx serve sandbox-web-app"
+          ]
+        },
+        "windows": {
+          "commands": [
+            "cd docker/khaos && docker compose down -v",
+            "cd docker/khaos && docker compose up -d --build",
+            "start cmd /k gradle bootRun -p apps/api/execution-service",
+            "timeout /t 20 /nobreak && start cmd /k nx serve worker-go",
+            "timeout /t 5 /nobreak && nx serve sandbox-web-app"
+          ]
+        }
+      }
+    }
+  }
+}

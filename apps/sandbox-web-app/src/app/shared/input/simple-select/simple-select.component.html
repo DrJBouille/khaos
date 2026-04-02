@@ -1,0 +1,9 @@
+<select
+  class="w-full rounded-md border px-3 py-2 bg-white"
+  [(ngModel)]="value"
+  (change)="onChange($event)"
+>
+  @for (element of elements(); track element) {
+    <option [value]="element">{{ element }}</option>
+  }
+</select>

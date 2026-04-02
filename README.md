@@ -1,96 +1,217 @@
-# Khaos
+# Work in Progress
+This is a training/sandbox project, not a production application. It is still in active development, subject to breaking changes, and may contain bugs or incomplete features.
 
-<a alt="Nx logo" href="https://nx.dev" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="45"></a>
+# Development Guide
 
-✨ Your new, shiny [Nx workspace](https://nx.dev) is ready ✨.
+Monorepo NX — `execution-service` · `sandbox-web-app` · `worker-go`
 
-[Learn more about this workspace setup and its capabilities](https://nx.dev/getting-started/intro#learn-nx?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects) or run `npx nx graph` to visually explore what was created. Now, let's get you up to speed!
+---
 
-## Run tasks
+## Prerequisites
 
-To run tasks with Nx use:
+| Tool | Usage |
+|------|-------|
+| [Docker](https://www.docker.com/) | Run the infrastructure (Khaos) |
+| [NX CLI](https://nx.dev/) | Run monorepo targets |
+| Java / Gradle | Build and run `execution-service` |
+| Go | Build and run `worker-go` |
+| Node.js | Run `sandbox-web-app` |
 
-```sh
-npx nx <target> <project-name>
+---
+
+## Architecture
+
+```
+monorepo/
+├── apps/
+│   ├── api/
+│   │   └── execution-service/   # Spring Boot API (Java/Gradle)
+│   ├── worker/
+│   │   └── worker-go/           # Worker (Go)
+│   └── sandbox-web-app/         # Frontend Angular
+└── docker/
+    └── khaos/
+        └── docker-compose.yml   # Docker infrastructure
 ```
 
-For example:
+---
 
-```sh
-npx nx build myproject
+## Start Everything at Once
+
+The easiest way to spin up the full stack. Uses `concurrently` and `wait-on` to start all services in the right order — the worker waits for the API to be ready on port `8080` before starting.
+
+```bash
+# Linux / macOS
+npm run start:all:linux
+
+# Windows
+npm run start:all:windows
 ```
 
-These targets are either [inferred automatically](https://nx.dev/concepts/inferred-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) or defined in the `project.json` or `package.json` files.
+Each service is color-coded in the terminal output:
 
-[More about running tasks in the docs &raquo;](https://nx.dev/features/run-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+| Color | Service |
+|-------|---------|
+| 🔵 Blue | `execution-service` (API) |
+| 🟢 Green | `worker-go` |
+| 🟣 Magenta | `sandbox-web-app` |
 
-## Add new projects
+> ⚠️ **Docker must be running** on your machine before using these scripts.  
+> The API starts Docker Compose internally before booting Spring Boot.
 
-While you could add new projects to your workspace manually, you might want to leverage [Nx plugins](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) and their [code generation](https://nx.dev/features/generate-code?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) feature.
+Install the required dependencies if not already present:
 
-To install a new plugin you can use the `nx add` command. Here's an example of adding the React plugin:
-```sh
-npx nx add @nx/react
+```bash
+npm install --save-dev concurrently wait-on
 ```
 
-Use the plugin's generator to create new projects. For example, to create a new React app or library:
+---
 
-```sh
-# Generate an app
-npx nx g @nx/react:app demo
+## Projects
 
-# Generate a library
-npx nx g @nx/react:lib some-lib
+### 1. `execution-service` — Spring Boot API
+
+> ⚠️ **Docker must be running** on your machine before starting this service.
+
+#### Full start (Docker + API)
+
+Resets Docker Compose then starts the Spring Boot server.
+
+```bash
+# Linux
+nx serve execution-service --configuration=linux
+
+# Windows
+nx serve execution-service --configuration=windows
 ```
 
-You can use `npx nx list` to get a list of installed plugins. Then, run `npx nx list <plugin-name>` to learn about more specific capabilities of a particular plugin. Alternatively, [install Nx Console](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) to browse plugins and generators in your IDE.
+What it does:
+1. `docker compose down -v` — removes existing containers
+2. `docker compose up -d --build` — rebuilds and starts the infrastructure
+3. `gradlew bootRun` — starts the Spring Boot API
 
-[Learn more about Nx plugins &raquo;](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) | [Browse the plugin registry &raquo;](https://nx.dev/plugin-registry?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+#### Simple start (Docker already running)
 
-## Set up CI!
+If Docker is already up and you just want to restart the API:
 
-### Step 1
+```bash
+# Linux
+nx run execution-service:simple-start --configuration=linux
 
-To connect to Nx Cloud, run the following command:
-
-```sh
-npx nx connect
+# Windows
+nx run execution-service:simple-start --configuration=windows
 ```
 
-Connecting to Nx Cloud ensures a [fast and scalable CI](https://nx.dev/ci/intro/why-nx-cloud?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) pipeline. It includes features such as:
+#### Build
 
-- [Remote caching](https://nx.dev/ci/features/remote-cache?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task distribution across multiple machines](https://nx.dev/ci/features/distribute-task-execution?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Automated e2e test splitting](https://nx.dev/ci/features/split-e2e-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task flakiness detection and rerunning](https://nx.dev/ci/features/flaky-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+```bash
+# Linux
+nx build execution-service --configuration=linux
 
-### Step 2
-
-Use the following command to configure a CI workflow for your workspace:
-
-```sh
-npx nx g ci-workflow
+# Windows
+nx build execution-service --configuration=windows
 ```
 
-[Learn more about Nx on CI](https://nx.dev/ci/intro/ci-with-nx#ready-get-started-with-your-provider?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+#### Tests
 
-## Install Nx Console
+```bash
+# Linux
+nx test execution-service --configuration=linux
 
-Nx Console is an editor extension that enriches your developer experience. It lets you run tasks, generate code, and improves code autocompletion in your IDE. It is available for VSCode and IntelliJ.
+# Windows
+nx test execution-service --configuration=windows
+```
 
-[Install Nx Console &raquo;](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+---
 
-## Useful links
+### 2. `worker-go` — Go Worker
 
-Learn more:
+> ⚠️ **`execution-service` must be running** before starting the worker.
 
-- [Learn more about this workspace setup](https://nx.dev/getting-started/intro#learn-nx?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects)
-- [Learn about Nx on CI](https://nx.dev/ci/intro/ci-with-nx?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Releasing Packages with Nx release](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [What are Nx plugins?](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+#### Start
 
-And join the Nx community:
-- [Discord](https://go.nx.dev/community)
-- [Follow us on X](https://twitter.com/nxdevtools) or [LinkedIn](https://www.linkedin.com/company/nrwl)
-- [Our Youtube channel](https://www.youtube.com/@nxdevtools)
-- [Our blog](https://nx.dev/blog?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+```bash
+nx serve worker-go
+```
+
+#### Build
+
+```bash
+nx build worker-go
+```
+
+Output binary at `apps/worker/worker-go/dist/worker`.
+
+---
+
+### 3. `sandbox-web-app` — Angular Frontend
+
+#### Start in development
+
+```bash
+nx serve sandbox-web-app
+```
+
+Available at [http://localhost:4200](http://localhost:4200)
+
+#### Serve static build
+
+```bash
+nx serve-static sandbox-web-app
+```
+
+Available at [http://localhost:4200](http://localhost:4200)
+
+#### Build
+
+```bash
+# Production
+nx build sandbox-web-app --configuration=production
+
+# Development
+nx build sandbox-web-app --configuration=development
+```
+
+Output at `dist/apps/sandbox-web-app/browser/`
+
+#### Lint
+
+```bash
+nx lint sandbox-web-app
+```
+
+#### Tests
+
+```bash
+nx test sandbox-web-app
+```
+
+---
+
+## Startup Order
+
+```
+Docker (Khaos)
+     ↓
+execution-service   (Spring Boot API — port 8080)
+     ↓
+worker-go           (Go Worker)
+     ↓
+sandbox-web-app     (Angular Frontend — port 4200)
+```
+
+---
+
+## Troubleshooting
+
+**Docker won't start**
+→ Check the daemon is running: `docker info`
+
+**Worker crashes on startup**
+→ Make sure `execution-service` is up and reachable on port `8080`
+
+**Port already in use**
+→ `lsof -i :8080` (Linux/macOS) or `netstat -ano | findstr :8080` (Windows)
+
+**Gradle not found (Linux)**
+→ Use the wrapper: `./gradlew` from the monorepo root
