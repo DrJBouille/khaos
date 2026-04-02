@@ -41,8 +41,10 @@ export class App implements AfterViewInit, OnDestroy {
 
   protected error = "";
   protected output = "";
-  protected status: STATUS = STATUS.NOT_STARTED;
+  protected status: STATUS | undefined;
   protected language = this.languages[0];
+  protected duration: number | undefined
+  protected id: string | undefined
 
   private taskSubscription: Subscription | undefined;
 
@@ -60,6 +62,8 @@ export class App implements AfterViewInit, OnDestroy {
           this.output = event.output;
           this.error = event.error;
           this.status = event.status;
+          this.id = event.id;
+          this.duration = event.duration;
 
           this.cdr.detectChanges();
         });

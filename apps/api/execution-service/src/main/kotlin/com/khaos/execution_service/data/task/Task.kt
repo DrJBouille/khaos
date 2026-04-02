@@ -29,6 +29,8 @@ data class Task (
   @Column(nullable = false)
   var status: TaskStatus = TaskStatus.NOT_STARTED,
 
+  var duration: Int? = null,
+
   @Column(name = "created_at")
   var createdAt: LocalDateTime = LocalDateTime.now()
 )

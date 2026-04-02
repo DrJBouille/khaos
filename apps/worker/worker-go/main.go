@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"time"
 
 	"github.com/rabbitmq/amqp091-go"
 )
@@ -14,10 +15,11 @@ import (
 type TaskStatus string
 
 type TaskResponseEvent struct {
-	Id     string     `json:"id"`
-	Status TaskStatus `json:"status"`
-	Output string     `json:"output"`
-	Error  string     `json:"error"`
+	Id       string     `json:"id"`
+	Status   TaskStatus `json:"status"`
+	Output   string     `json:"output"`
+	Error    string     `json:"error"`
+	Duration *int64     `json:"duration"`
 }
 
 type TaskSubmittedEvent struct {
@@ -75,17 +77,17 @@ func sendResponse(d amqp091.Delivery, ch *amqp091.Channel, taskResponseEvent *Ta
 	}
 }
 
-func run(event TaskSubmittedEvent) (string, string, error) {
+func run(event TaskSubmittedEvent) (string, string, int64, error) {
 	languageDetails := Languages[event.Language]
 	tmpfile, err := os.CreateTemp("", "script-*"+languageDetails.extension)
 	if err != nil {
-		return "", "", err
+		return "", "", 0, err
 	}
 	defer os.Remove(tmpfile.Name())
 
 	_, err = tmpfile.WriteString(event.Code)
 	if err != nil {
-		return "", "", err
+		return "", "", 0, err
 	}
 	tmpfile.Close()
 
@@ -105,15 +107,20 @@ func run(event TaskSubmittedEvent) (string, string, error) {
 	stdout, _ := cmd.StdoutPipe()
 	stderr, _ := cmd.StderrPipe()
 
+	start := time.Now()
+
 	err = cmd.Start()
 	if err != nil {
-		return "", "", err
+		return "", "", 0, err
 	}
 
 	outBytes, _ := io.ReadAll(stdout)
 	errBytes, _ := io.ReadAll(stderr)
 
-	return string(outBytes), string(errBytes), nil
+	err = cmd.Wait()
+	duration := time.Since(start).Milliseconds()
+
+	return string(outBytes), string(errBytes), duration, nil
 }
 
 func main() {
@@ -156,10 +163,11 @@ func main() {
 			taskResponseEvent.Status = Running
 			taskResponseEvent.Output = ""
 			taskResponseEvent.Error = ""
+			taskResponseEvent.Duration = nil
 
 			sendResponse(d, ch, taskResponseEvent)
 
-			output, error, err := run(event)
+			output, outputErr, duration, err := run(event)
 
 			if err != nil {
 				taskResponseEvent.Status = Failed
@@ -168,8 +176,9 @@ func main() {
 			}
 
 			taskResponseEvent.Output = output
-			taskResponseEvent.Error = error
+			taskResponseEvent.Error = outputErr
 			taskResponseEvent.Status = Finished
+			taskResponseEvent.Duration = &duration
 
 			sendResponse(d, ch, taskResponseEvent)
 		}

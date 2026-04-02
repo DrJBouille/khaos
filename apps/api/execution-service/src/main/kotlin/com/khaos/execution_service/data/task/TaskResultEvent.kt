@@ -5,4 +5,5 @@ data class TaskResultEvent (
   val status: String = "",
   val output: String = "",
   val error: String = "",
+  val duration: Int? = null,
 )

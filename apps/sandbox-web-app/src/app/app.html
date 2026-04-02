@@ -5,7 +5,7 @@
 
     <div class="flex flex-col gap-4">
       <div class="flex gap-4">
-        <app-simple-select [selected]="language" [elements]="languages" (change)="changeLanguage($event)"/>
+        <app-simple-select class="w-4/5" [selected]="language" [elements]="languages" (change)="changeLanguage($event)"/>
         <div class="w-1/5">
           <app-black-button (click)="run()" [text]="'Run'"/>
         </div>
@@ -13,7 +13,25 @@
 
 
       @if (status) {
-        <p class="{{STATUS_COLORS[status].textColor}} {{STATUS_COLORS[status].primaryColor}} p-2 px-4 w-fit rounded-lg font-semibold">{{ status }}</p>
+        <div class="w-full flex gap-4">
+          <p class="{{STATUS_COLORS[status].textColor}} {{STATUS_COLORS[status].primaryColor}} p-2 px-4 w-fit rounded-lg font-semibold">
+            {{ status }}
+          </p>
+
+          @if (duration) {
+            <p class="flex-1 p-2 px-4 rounded-lg font-semibold border text-center">
+              {{ duration / 1000 }} s
+            </p>
+          } @else {
+            <p class="flex-1 p-2 px-4 rounded-lg font-semibold border text-center">
+              Not finished
+            </p>
+          }
+
+          <p class="p-2 px-4 w-fit rounded-lg font-semibold border">
+            {{ id }}
+          </p>
+        </div>
       }
 
       <pre class="w-full flex-1 border border-zinc-900 rounded p-4 h-64 overflow-scroll">

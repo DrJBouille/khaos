@@ -5,4 +5,5 @@ export interface TaskResultEvent {
   status: STATUS;
   output: string;
   error: string;
+  duration: number;
 }
