@@ -13,12 +13,28 @@ type DockerExecutor struct{}
 type Language struct {
 	Extension string
 	Image     string
-	Command   string
+	Command   []string
 }
 
 var languages = map[string]Language{
-	"JAVASCRIPT": {".js", "node:20-alpine", "node"},
-	"PYTHON":     {".py", "python:3.11-slim", "python"},
+	"JAVASCRIPT": {
+		Extension: ".js",
+		Image:     "node:20-alpine",
+		Command:   []string{"node", "/app/script.js"},
+	},
+	"PYTHON": {
+		Extension: ".py",
+		Image:     "python:3.11-slim",
+		Command:   []string{"python", "/app/script.py"},
+	},
+	"JAVA": {
+		Extension: ".java",
+		Image:     "openjdk:21-ea-jdk-slim",
+		Command: []string{
+			"sh", "-c",
+			"javac /app/script.java && java -cp /app script",
+		},
+	},
 }
 
 func (d DockerExecutor) Run(code string, lang string) (string, string, int64, error) {
@@ -33,17 +49,19 @@ func (d DockerExecutor) Run(code string, lang string) (string, string, int64, er
 	tmpfile.WriteString(code)
 	tmpfile.Close()
 
-	cmd := exec.Command(
-		"docker", "run",
+	dockerArgs := []string{
+		"run",
 		"--rm",
 		"-v", fmt.Sprintf("%s:/app/script%s", tmpfile.Name(), language.Extension),
 		"--network", "none",
 		"--memory", "128m",
 		"--cpus", "0.5",
 		language.Image,
-		language.Command,
-		fmt.Sprintf("/app/script%s", language.Extension),
-	)
+	}
+
+	dockerArgs = append(dockerArgs, language.Command...)
+
+	cmd := exec.Command("docker", dockerArgs...)
 
 	stdout, _ := cmd.StdoutPipe()
 	stderr, _ := cmd.StderrPipe()

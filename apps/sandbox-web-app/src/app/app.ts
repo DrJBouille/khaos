@@ -33,7 +33,7 @@ export class App implements AfterViewInit, OnDestroy {
   private taskService = inject(TaskService);
   private cdr = inject(ChangeDetectorRef);
 
-  protected languages = ["JAVASCRIPT", "PYTHON"];
+  protected languages = ["JAVASCRIPT", "PYTHON", "JAVA"];
 
   private languageCompartment = new Compartment();
   @ViewChild('editor', { static: true }) editorRef!: ElementRef;
