@@ -1,0 +1,30 @@
+<table class="min-w-full border-collapse border border-gray-200 text-left rounded-md">
+  <thead class="bg-gray-100">
+  <tr>
+    <th class="px-4 py-2 border-b">ID</th>
+    <th class="px-4 py-2 border-b">Status</th>
+    <th class="px-4 py-2 border-b">Duration</th>
+    <th class="px-4 py-2 border-b">Creation</th>
+  </tr>
+  </thead>
+  <tbody>
+    @for (task of tasks(); track task.id) {
+      <tr class="hover:bg-gray-50">
+        <td class="px-4 py-2 border-b">{{ task.id }}</td>
+        <td class="px-4 py-2 border-b">
+          <p class="{{STATUS_COLORS[task.status].textColor}} {{STATUS_COLORS[task.status].primaryColor}} p-1 px-2 w-fit rounded-lg text-sm font-semibold">
+            {{ task.status }}
+          </p>
+        </td>
+        <td class="px-4 py-2 border-b">
+          @if (task.duration) {
+            {{ (task.duration / 1000) | number:'1.0-2' }} s
+          }
+        </td>
+        <td class="px-4 py-2 border-b">
+          {{ task.createdAt | date: 'dd-MM-yyyy HH:mm:ss' }}
+        </td>
+      </tr>
+    }
+  </tbody>
+</table>
