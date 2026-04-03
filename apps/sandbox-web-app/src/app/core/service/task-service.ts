@@ -15,6 +15,7 @@ export class TaskService {
 
   private httpURL = 'http://localhost:8080/api/tasks';
   private wsURL = 'ws://localhost:8080/ws';
+  private connected = false;
 
   createTask(taskRequest: TaskRequest) {
     return this.http.post<Task>(this.httpURL, taskRequest);
@@ -28,24 +29,26 @@ export class TaskService {
     return this.http.get<Task[]>(this.httpURL);
   }
 
-  connect(subject: Subject<TaskResultEvent>): Observable<void> {
+
+  connect(): Observable<void> {
     return new Observable(observer => {
-      if (!this.stompClient) {
-        this.stompClient = new Client({
-          brokerURL: this.wsURL,
-          onConnect: () => {
-            console.log('WS connected');
-            observer.next();
-            observer.complete();
-          },
-          onDisconnect: () => subject.complete(),
-          onStompError: (frame) => subject.error(frame),
-        });
-        this.stompClient.activate();
-      } else {
+      if (this.connected) {
         observer.next();
         observer.complete();
+        return;
       }
+
+      this.stompClient = new Client({
+        brokerURL: this.wsURL,
+        onConnect: () => {
+          this.connected = true;
+          observer.next();
+          observer.complete();
+        },
+        onDisconnect: () => { this.connected = false; },
+        onStompError: (frame) => observer.error(frame),
+      });
+      this.stompClient.activate();
     });
   }
 

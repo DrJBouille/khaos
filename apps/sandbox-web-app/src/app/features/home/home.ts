@@ -47,7 +47,7 @@ export class Home implements AfterViewInit, OnDestroy {
     const taskRequest: TaskRequest = {language: this.language, code};
     const taskEvents$ = new Subject<TaskResultEvent>();
 
-    this.taskService.connect(taskEvents$).subscribe(() => {
+    this.taskService.connect().subscribe(() => {
       this.taskService.createTask(taskRequest).subscribe(task => {
         this.status = task.status;
         this.taskService.subscribeToTask(task.id, taskEvents$);
@@ -74,7 +74,6 @@ export class Home implements AfterViewInit, OnDestroy {
     }
 
     ngOnDestroy() {
-      this.taskService.closeConnection();
       this.taskSubscription?.unsubscribe();
     }
 
