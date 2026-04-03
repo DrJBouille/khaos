@@ -1,0 +1,47 @@
+<div class="w-full h-full grid grid-cols-3 gap-4 text-gray-800">
+  <div class="max-h-full col-span-2 border border-zinc-900 rounded-lg overflow-hidden flex flex-col">
+    <div class="flex-1 min-h-0" #editor></div>
+  </div>
+
+  <div class="flex flex-col gap-4">
+    <div class="flex gap-4">
+      <app-simple-select class="w-4/5" [selected]="language" [elements]="languages" (change)="changeLanguage($event)"/>
+      <div class="w-1/5">
+        <app-black-button (click)="run()" [text]="'Run'"/>
+      </div>
+    </div>
+
+
+    @if (status) {
+      <div class="w-full 2xl:flex grid grid-cols-2 gap-4">
+        <p class="{{STATUS_COLORS[status].textColor}} {{STATUS_COLORS[status].primaryColor}} flex items-center p-2 px-4 w-fit rounded-lg font-semibold">
+          {{ status }}
+        </p>
+
+        @if (duration) {
+          <p class="flex-1 p-2 px-4 rounded-lg font-semibold border text-center">
+            {{ duration / 1000 }} s
+          </p>
+        } @else {
+          <p class="flex-1 p-2 px-4 rounded-lg font-semibold border text-center text-sm">
+            Not finished
+          </p>
+        }
+
+        <p class="flex items-center p-2 px-4 2xl:w-fit col-span-2 rounded-lg font-semibold border">
+          {{ id }}
+        </p>
+      </div>
+    }
+
+    <pre class="w-full flex-1 border border-zinc-900 rounded p-4 h-64 overflow-scroll">
+        {{ output }}
+      </pre>
+
+    @if (error != "") {
+      <pre class="w-full flex-1 border border-zinc-900 rounded text-red-600 p-4 h-64 overflow-scroll">
+          {{error}}
+        </pre>
+    }
+  </div>
+</div>

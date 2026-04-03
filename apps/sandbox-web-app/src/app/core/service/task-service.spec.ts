@@ -1,6 +1,6 @@
-import { TestBed } from '@angular/core/testing';
-
 import { TaskService } from './task-service';
+// @ts-ignore
+import {TestBed} from "@angular/core/testing";
 
 describe('TaskService', () => {
   let service: TaskService;

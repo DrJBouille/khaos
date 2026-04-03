@@ -39,8 +39,9 @@ class TaskService(
     val task = getTask(UUID.fromString(taskResultEvent.id)) ?: return
 
     task.status = TaskStatus.valueOf(taskResultEvent.status)
+    task.duration = taskResultEvent.duration
+    task.dockerProcessId = taskResultEvent.dockerProcessId
 
-    println(taskResultEvent)
     messagingTemplate.convertAndSend("/topic/tasks/${task.id}", taskResultEvent)
 
     taskRepository.save(task)

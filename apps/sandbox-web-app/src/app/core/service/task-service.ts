@@ -1,9 +1,9 @@
 import {inject, Injectable} from '@angular/core';
 import {HttpClient} from "@angular/common/http";
-import {Task} from "./types/Task";
-import {TaskRequest} from "./types/TaskRequest";
+import {Task} from "../../shared/types/Task";
+import {TaskRequest} from "../../shared/types/TaskRequest";
 import {Observable, Subject} from "rxjs";
-import {TaskResultEvent} from "./types/TaskResultEvent";
+import {TaskResultEvent} from "../../shared/types/TaskResultEvent";
 import {Client} from "@stomp/stompjs";
 
 @Injectable({
@@ -22,6 +22,10 @@ export class TaskService {
 
   getTask(id: string) {
     return this.http.get<Task>(this.httpURL + "/" + id);
+  }
+
+  getTasks() {
+    return this.http.get<Task[]>(this.httpURL);
   }
 
   connect(subject: Subject<TaskResultEvent>): Observable<void> {
