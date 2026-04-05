@@ -24,6 +24,9 @@ class TaskService(
     val taskSubmittedEvent = TaskSubmittedEvent(task.id!!, taskRequest.code, taskRequest.language)
     messageProducer.send(taskSubmittedEvent)
 
+    task.status = TaskStatus.PENDING
+    taskRepository.save(task)
+
     return task
   }
 
@@ -43,6 +46,7 @@ class TaskService(
     task.dockerProcessId = taskResultEvent.dockerProcessId
 
     messagingTemplate.convertAndSend("/topic/tasks/${task.id}", taskResultEvent)
+    messagingTemplate.convertAndSend("/topic/tasks", taskResultEvent)
 
     taskRepository.save(task)
   }

@@ -7,7 +7,7 @@
     "build": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "go build -o dist/worker main.go",
+        "command": "go build -o ../../dist/worker main.go",
         "cwd": "apps/worker/worker-go/cmd/worker"
       }
     },

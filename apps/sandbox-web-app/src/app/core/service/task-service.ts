@@ -59,6 +59,13 @@ export class TaskService {
     });
   }
 
+  subscribeToAllTasks(subject: Subject<TaskResultEvent>) {
+    this.stompClient!.subscribe(`/topic/tasks`, (message) => {
+      const event: TaskResultEvent = JSON.parse(message.body);
+      subject.next(event);
+    });
+  }
+
   closeConnection() {
     this.stompClient?.deactivate();
   }

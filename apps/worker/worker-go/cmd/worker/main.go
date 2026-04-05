@@ -5,6 +5,8 @@ import (
 	"go-worker/internal/executor"
 	"go-worker/internal/service"
 	"log"
+
+	"github.com/rabbitmq/amqp091-go"
 )
 
 func main() {
@@ -15,7 +17,15 @@ func main() {
 	defer conn.Close()
 	defer ch.Close()
 
-	msgs, err := ch.Consume("code-submitted", "", true, false, false, false, nil)
+	const maxWorkers = 10
+	semaphore := make(chan struct{}, maxWorkers)
+
+	err = ch.Qos(maxWorkers, 0, false)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	msgs, err := ch.Consume("code-submitted", "", false, false, false, false, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -24,6 +34,12 @@ func main() {
 	worker := service.NewWorker(exec, ch)
 
 	for msg := range msgs {
-		go worker.HandleMessage(msg)
+		semaphore <- struct{}{}
+
+		go func(m amqp091.Delivery) {
+			defer func() { <-semaphore }()
+
+			worker.HandleMessage(m)
+		}(msg)
 	}
 }

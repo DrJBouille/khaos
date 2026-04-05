@@ -20,6 +20,7 @@ func NewWorker(exec executor.Executor, ch *amqp091.Channel) *Worker {
 }
 
 func (worker *Worker) HandleMessage(d amqp091.Delivery) {
+	defer d.Ack(false)
 	var event model.TaskSubmittedEvent
 
 	if err := json.Unmarshal(d.Body, &event); err != nil {
