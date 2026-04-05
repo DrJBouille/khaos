@@ -19,6 +19,7 @@ services:
     ports:
       - 5672:5672
       - 15672:15672
+    entrypoint: "/bin/sh -c 'sh /etc/rabbitmq/generate-definitions.sh && docker-entrypoint.sh rabbitmq-server'"
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
@@ -28,6 +29,8 @@ services:
     volumes:
       - rabbitmq-lib:/var/lib/rabbitmq/
       - rabbitmq-log:/var/log/rabbitmq
+      - ./rabbitmq/generate-definitions.sh:/etc/rabbitmq/generate-definitions.sh
+      - ./rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
 
 configs:
   rabbitmq-plugins:
