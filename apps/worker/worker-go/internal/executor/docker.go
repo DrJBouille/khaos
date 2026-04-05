@@ -1,6 +1,8 @@
 package executor
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -61,6 +63,9 @@ func (d DockerExecutor) Run(code string, lang string) (string, string, int64, er
 
 	dockerArgs = append(dockerArgs, language.Command...)
 
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
 	cmd := exec.Command("docker", dockerArgs...)
 
 	stdout, _ := cmd.StdoutPipe()
@@ -74,6 +79,10 @@ func (d DockerExecutor) Run(code string, lang string) (string, string, int64, er
 
 	cmd.Wait()
 	duration := time.Since(start).Milliseconds()
+
+	if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+		return string(out), string(errOut), duration, fmt.Errorf("execution timeout")
+	}
 
 	return string(out), string(errOut), duration, nil
 }
