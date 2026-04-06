@@ -5,6 +5,7 @@ import {TaskRequest} from "../../shared/types/TaskRequest";
 import {Observable, Subject} from "rxjs";
 import {TaskResultEvent} from "../../shared/types/TaskResultEvent";
 import {Client} from "@stomp/stompjs";
+import {environment} from "../../../environments/environment";
 
 @Injectable({
   providedIn: 'root',
@@ -13,8 +14,8 @@ export class TaskService {
   private http = inject(HttpClient);
   private stompClient: Client | undefined;
 
-  private httpURL = 'http://localhost:8080/api/tasks';
-  private wsURL = 'ws://localhost:8080/ws';
+  private httpURL = `${environment.apiUrl}/tasks`;
+  private wsURL = environment.wsUrl;
   private connected = false;
 
   createTask(taskRequest: TaskRequest) {

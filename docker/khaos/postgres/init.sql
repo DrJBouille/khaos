@@ -1,3 +1,6 @@
+-- Keycloak DB
+CREATE DATABASE keycloak;
+
 -- khaos DB
 CREATE DATABASE khaos;
 

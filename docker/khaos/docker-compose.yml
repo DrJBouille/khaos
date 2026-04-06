@@ -12,6 +12,29 @@ services:
     ports:
       - "${POSTGRES_PORT}:5432"
 
+  keycloak:
+    image: quay.io/keycloak/keycloak:${KC_VERSION}
+    container_name: ${KC_NAME}
+    depends_on:
+      - postgres
+    command: start-dev --import-realm
+    environment:
+      KC_DB: ${KC_DB}
+      KC_DB_URL: ${KC_DB_URL}
+      KC_DB_USERNAME: ${KC_DB_USERNAME}
+      KC_DB_PASSWORD: ${KC_DB_PASSWORD}
+
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+
+      KC_HTTP_ENABLED: "true"
+      KC_HOSTNAME_STRICT: "false"
+    volumes:
+      - ./keycloak:/opt/keycloak/data/import
+    ports:
+      - "${KC_PORT}:8080"
+    restart: unless-stopped
+
   rabbitmq:
     image: rabbitmq:${RABBITMQ_VERSION}
     container_name: ${RABBITMQ_NAME}
