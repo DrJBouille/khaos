@@ -1,0 +1,22 @@
+<div class="p-5 border-b border-zinc-200">
+  <h2 class="text-base font-medium text-gray-800">Logout</h2>
+</div>
+
+<div class="p-5">
+  <p class="text-sm text-gray-500">{{ data.message }}</p>
+</div>
+
+<div class="flex justify-end gap-2 px-5 pb-5">
+  <button
+    (click)="onCloseDialog(false)"
+    class="border border-zinc-300 text-gray-500 hover:bg-gray-100 text-sm px-4 py-1.5 rounded transition"
+  >
+    Cancel
+  </button>
+  <button
+    (click)="onCloseDialog(true)"
+    class="border border-red-500 text-red-500 hover:bg-red-50 text-sm px-4 py-1.5 rounded transition"
+  >
+    Logout
+  </button>
+</div>

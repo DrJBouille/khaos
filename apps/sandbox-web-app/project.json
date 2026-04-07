@@ -8,7 +8,9 @@
   "targets": {
     "build": {
       "executor": "@angular/build:application",
-      "outputs": ["{options.outputPath}"],
+      "outputs": [
+        "{options.outputPath}"
+      ],
       "options": {
         "outputPath": "dist/apps/sandbox-web-app",
         "browser": "apps/sandbox-web-app/src/main.ts",
@@ -25,6 +27,7 @@
           }
         ],
         "styles": [
+          "apps/sandbox-web-app/src/material-theme.scss",
           "apps/sandbox-web-app/src/styles.css",
           "node_modules/monaco-editor/min/vs/editor/editor.main.css"
         ]
@@ -77,7 +80,9 @@
     },
     "test": {
       "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "outputs": [
+        "{workspaceRoot}/coverage/{projectRoot}"
+      ],
       "options": {
         "jestConfig": "apps/sandbox-web-app/jest.config.cts",
         "tsConfig": "apps/sandbox-web-app/tsconfig.spec.json"
