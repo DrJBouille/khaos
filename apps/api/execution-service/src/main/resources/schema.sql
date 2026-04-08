@@ -27,7 +27,9 @@ CREATE TABLE IF NOT EXISTS khaos_users (
 
 CREATE TABLE IF NOT EXISTS sessions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  code TEXT NOT NULL DEFAULT ''
+  code TEXT NOT NULL DEFAULT '',
+  user_id UUID NOT NULL,
+  CONSTRAINT fk_khaos_users FOREIGN KEY(user_id) REFERENCES khaos_users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS tasks (

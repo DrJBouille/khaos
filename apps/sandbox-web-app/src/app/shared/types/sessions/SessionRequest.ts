@@ -1,0 +1,3 @@
+interface SessionRequest {
+  code: string;
+}

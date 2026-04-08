@@ -26,4 +26,6 @@ class KhaosUserService(
 
     return khaosUserRepository.save(user)
   }
+
+  fun getUserFromToken(jwt: Jwt) = khaosUserRepository.findByKeycloakId(jwt.subject)
 }

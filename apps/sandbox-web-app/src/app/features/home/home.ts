@@ -1,9 +1,17 @@
-import {AfterViewInit, ChangeDetectorRef, Component, ElementRef, inject, OnDestroy, ViewChild} from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  inject,
+  OnDestroy,
+  OnInit,
+  ViewChild
+} from '@angular/core';
 import {TaskService} from "../../core/services/task-service/task-service";
 import {Compartment} from "@codemirror/state";
 import {EditorView} from "@codemirror/view";
 import {STATUS, STATUS_COLORS} from "../../shared/status/STATUS_COLOR";
-import {Subject, Subscription} from "rxjs";
+import {catchError, debounceTime, EMPTY, Subject, Subscription, switchMap, throwError} from "rxjs";
 import {TaskRequest} from "../../shared/types/tasks/TaskRequest";
 import {TaskResultEvent} from "../../shared/types/tasks/TaskResultEvent";
 import {basicSetup} from "codemirror";
@@ -11,6 +19,7 @@ import {javascript} from "@codemirror/lang-javascript";
 import {python} from "@codemirror/lang-python";
 import {BlackButton} from "../../shared/buttons/black-button/black-button";
 import {SimpleSelect} from "../../shared/input/simple-select/simple-select.component";
+import {SessionsService} from "../../core/services/sessions-service/sessions-service";
 
 @Component({
   selector: 'app-home',
@@ -21,17 +30,31 @@ import {SimpleSelect} from "../../shared/input/simple-select/simple-select.compo
   templateUrl: './home.html',
   styleUrl: './home.css',
 })
-export class Home implements AfterViewInit, OnDestroy {
+export class Home implements OnInit, OnDestroy {
   protected title = 'sandbox-web-app';
 
   private taskService = inject(TaskService);
+  private sessionService = inject(SessionsService);
   private cdr = inject(ChangeDetectorRef);
+
+  private session: Session | undefined;
+  private sessionSubscription: Subscription | undefined;
+  private destroy$ = new Subject<void>();
+  private editorChanges$ = new Subject<void>();
+  protected saveStatus = 'Saved';
 
   protected languages = ["JAVASCRIPT", "PYTHON", "JAVA"];
 
   private languageCompartment = new Compartment();
   @ViewChild('editor', {static: true}) editorRef!: ElementRef;
   editor!: EditorView;
+  updateListener = EditorView.updateListener.of((update) => {
+    if (update.docChanged) {
+      this.editorChanges$.next();
+      this.saveStatus = 'Saving...';
+      this.cdr.detectChanges();
+    }
+  });
 
   protected error = "";
   protected output = "";
@@ -65,17 +88,55 @@ export class Home implements AfterViewInit, OnDestroy {
     });
   }
 
-    ngAfterViewInit() {
+  ngOnInit() {
+    this.sessionSubscription = this.sessionService.getMySession().pipe(
+      catchError(err => {
+        if (err.status === 404) {
+          const sessionRequest: SessionRequest = {
+            code: this.editor.state.doc.toString()
+          };
+          return this.sessionService.createSession(sessionRequest);
+        }
+        return throwError(() => err);
+      })
+    ).subscribe(session => {
+      this.session = session;
+
       this.editor = new EditorView({
-        doc: "setTimeout(function(){\n    console.log('test');\n}, 4000);",
-        extensions: [basicSetup, this.languageCompartment.of(javascript())],
+        doc: session.code == "" ? "setTimeout(function(){\n    console.log('test');\n}, 4000);" : session.code,
+        extensions: [basicSetup, this.languageCompartment.of(javascript()), this.updateListener],
         parent: this.editorRef.nativeElement
       });
+    });
+
+    this.editorChanges$.pipe(
+      debounceTime(1000),
+      switchMap(() => {
+        if (!this.session) return EMPTY;
+
+        const sessionRequest: SessionRequest = {
+          code: this.editor.state.doc.toString()
+        };
+
+        return this.sessionService.updateSession(this.session.id, sessionRequest);
+      })
+    ).subscribe({next: () => {
+        this.saveStatus = 'Saved';
+        this.cdr.detectChanges();
+      }});
+  }
+
+  ngOnDestroy() {
+    if (this.session) {
+      const sessionRequest: SessionRequest = {
+        code: this.editor.state.doc.toString()
+      };
+      this.sessionService.updateSession(this.session.id, sessionRequest).subscribe();
     }
 
-    ngOnDestroy() {
-      this.taskSubscription?.unsubscribe();
-    }
+    this.taskSubscription?.unsubscribe();
+    this.sessionSubscription?.unsubscribe();
+  }
 
   protected changeLanguage(lang: string) {
     if (typeof lang !== "string") return
