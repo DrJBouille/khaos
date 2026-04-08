@@ -1,21 +1,9 @@
 import {Component, inject} from '@angular/core';
-import {
-  MAT_DIALOG_DATA,
-  MatDialogActions,
-  MatDialogContent,
-  MatDialogRef,
-  MatDialogTitle
-} from "@angular/material/dialog";
-import {MatButton} from "@angular/material/button";
+import {MAT_DIALOG_DATA, MatDialogRef } from "@angular/material/dialog";
 
 @Component({
   selector: 'app-confirm-dialog',
-  imports: [
-    MatDialogContent,
-    MatDialogActions,
-    MatButton,
-    MatDialogTitle
-  ],
+  imports: [],
   templateUrl: './confirm-dialog.html',
   styleUrl: './confirm-dialog.css',
 })

@@ -1,4 +1,4 @@
-import {STATUS} from "../status/STATUS_COLOR";
+import {STATUS} from "../../status/STATUS_COLOR";
 
 export interface TaskResultEvent {
   id: string;

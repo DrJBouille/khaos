@@ -1,11 +1,11 @@
 import {Component, inject, OnDestroy, OnInit, signal} from '@angular/core';
-import {TaskService} from "../../core/service/task-service";
-import {Task} from "../../shared/types/Task";
+import {TaskService} from "../../core/services/task-service/task-service";
+import {Task} from "../../shared/types/tasks/Task";
 import {DatePipe, DecimalPipe} from "@angular/common";
 import {STATUS_COLORS} from "../../shared/status/STATUS_COLOR";
 import {Client} from "@stomp/stompjs";
 import {Subject, Subscription} from "rxjs";
-import {TaskResultEvent} from "../../shared/types/TaskResultEvent";
+import {TaskResultEvent} from "../../shared/types/tasks/TaskResultEvent";
 
 @Component({
   selector: 'app-tasks',

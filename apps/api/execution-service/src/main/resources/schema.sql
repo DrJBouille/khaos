@@ -17,6 +17,19 @@ END IF;
 END
 $$;
 
+CREATE TABLE IF NOT EXISTS khaos_users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  keycloak_id VARCHAR(255) UNIQUE NOT NULL,
+  username VARCHAR(24) NOT NULL,
+  email VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS sessions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  code TEXT NOT NULL DEFAULT ''
+);
+
 CREATE TABLE IF NOT EXISTS tasks (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   docker_process_id TEXT NOT NULL,

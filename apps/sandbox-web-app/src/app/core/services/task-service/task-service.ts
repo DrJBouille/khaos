@@ -1,11 +1,11 @@
 import {inject, Injectable} from '@angular/core';
 import {HttpClient} from "@angular/common/http";
-import {Task} from "../../shared/types/Task";
-import {TaskRequest} from "../../shared/types/TaskRequest";
+import {Task} from "../../../shared/types/tasks/Task";
+import {TaskRequest} from "../../../shared/types/tasks/TaskRequest";
 import {Observable, Subject} from "rxjs";
-import {TaskResultEvent} from "../../shared/types/TaskResultEvent";
+import {TaskResultEvent} from "../../../shared/types/tasks/TaskResultEvent";
 import {Client} from "@stomp/stompjs";
-import {environment} from "../../../environments/environment";
+import {environment} from "../../../../environments/environment";
 
 @Injectable({
   providedIn: 'root',

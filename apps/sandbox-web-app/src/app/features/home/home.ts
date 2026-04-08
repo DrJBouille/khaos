@@ -1,11 +1,11 @@
 import {AfterViewInit, ChangeDetectorRef, Component, ElementRef, inject, OnDestroy, ViewChild} from '@angular/core';
-import {TaskService} from "../../core/service/task-service";
+import {TaskService} from "../../core/services/task-service/task-service";
 import {Compartment} from "@codemirror/state";
 import {EditorView} from "@codemirror/view";
 import {STATUS, STATUS_COLORS} from "../../shared/status/STATUS_COLOR";
 import {Subject, Subscription} from "rxjs";
-import {TaskRequest} from "../../shared/types/TaskRequest";
-import {TaskResultEvent} from "../../shared/types/TaskResultEvent";
+import {TaskRequest} from "../../shared/types/tasks/TaskRequest";
+import {TaskResultEvent} from "../../shared/types/tasks/TaskResultEvent";
 import {basicSetup} from "codemirror";
 import {javascript} from "@codemirror/lang-javascript";
 import {python} from "@codemirror/lang-python";
