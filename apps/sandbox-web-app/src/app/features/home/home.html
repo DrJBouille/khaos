@@ -1,4 +1,13 @@
-<div class="w-full p-2 pt-0">
+<div class="w-full flex items-end gap-4 py-2 pt-0">
+  <button (click)="toggleSessionOpening()" class="flex items-center gap-4 border rounded p-1 px-2" [ngClass]="session?.isOpened ? 'text-red-500 border-red-500 hover:bg-red-100' : 'text-black border-zinc-900 hover:bg-zinc-100'">
+    @if (this.session?.isOpened) {
+      <p>Stop session</p>
+      <ng-icon name="heroStop" size="24"></ng-icon>
+    } @else {
+      <p>Start session</p>
+      <ng-icon name="heroPlay" size="24"></ng-icon>
+    }
+  </button>
   <p>{{saveStatus}}</p>
 </div>
 <div class="w-full h-full grid grid-cols-3 gap-4 text-gray-800">

@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS sessions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   code TEXT NOT NULL DEFAULT '',
   user_id UUID NOT NULL,
+  is_opened BOOLEAN NOT NULL DEFAULT false,
   CONSTRAINT fk_khaos_users FOREIGN KEY(user_id) REFERENCES khaos_users(id) ON DELETE CASCADE
 );
 

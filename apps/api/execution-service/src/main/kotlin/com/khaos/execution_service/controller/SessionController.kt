@@ -2,8 +2,12 @@ package com.khaos.execution_service.controller
 
 import com.khaos.execution_service.data.sessions.Session
 import com.khaos.execution_service.data.sessions.SessionRequest
+import com.khaos.execution_service.data.sessions.SessionUpdateEvent
 import com.khaos.execution_service.service.SessionService
 import org.springframework.http.ResponseEntity
+import org.springframework.messaging.handler.annotation.MessageMapping
+import org.springframework.messaging.handler.annotation.Payload
+import org.springframework.messaging.simp.SimpMessagingTemplate
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.web.bind.annotation.GetMapping
@@ -18,7 +22,8 @@ import java.util.UUID
 @RestController
 @RequestMapping("/api/sessions")
 class SessionController(
-  private val sessionService: SessionService
+  private val sessionService: SessionService,
+  private val messagingTemplate: SimpMessagingTemplate,
 ) {
   @GetMapping("/me")
   fun getSessions(@AuthenticationPrincipal jwt: Jwt): ResponseEntity<Session> {
@@ -28,6 +33,13 @@ class SessionController(
     } catch (e: Exception) {
       return ResponseEntity.notFound().build()
     }
+  }
+
+  @GetMapping("/{id}")
+  fun getSession(@PathVariable id: UUID): ResponseEntity<Session> {
+    val session = sessionService.getSession(id) ?: return ResponseEntity.notFound().build()
+    if (session.isOpened) return ResponseEntity.ok(session)
+    return ResponseEntity.badRequest().build()
   }
 
   @PostMapping
@@ -45,5 +57,16 @@ class SessionController(
   fun updateSession(@RequestBody sessionRequest: SessionRequest, @PathVariable sessionId: UUID): ResponseEntity<Session> {
     val session = sessionService.updateSession(sessionId, sessionRequest) ?: return ResponseEntity.notFound().build()
     return ResponseEntity.ok(session)
+  }
+
+  @PutMapping("/toggle")
+  fun toggleSession(@AuthenticationPrincipal jwt: Jwt): ResponseEntity<Session> {
+    val session = sessionService.toggleSession(jwt) ?: return ResponseEntity.notFound().build()
+    return ResponseEntity.ok(session)
+  }
+
+  @MessageMapping("/session/{sessionId}")
+  fun sendUpdate(@Payload sessionUpdateEvent: SessionUpdateEvent) {
+    messagingTemplate.convertAndSend("/topic/session/${sessionUpdateEvent.id}", sessionUpdateEvent.message)
   }
 }

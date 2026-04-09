@@ -20,4 +20,8 @@ export class SessionsService {
   updateSession(id: string, sessionRequest: SessionRequest) {
     return this.http.put<Session>(this.httpURL + `/${id}`, sessionRequest)
   }
+
+  toggleSessions() {
+    return this.http.put<Session>(this.httpURL + '/toggle', {})
+  }
 }

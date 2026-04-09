@@ -11,7 +11,7 @@ import kotlin.jvm.optionals.getOrNull
 @Service
 class SessionService(
   private val sessionRepository: SessionRepository,
-  private val userService: KhaosUserService,
+  private val userService: KhaosUserService
 ) {
   fun createSession(sessionRequest: SessionRequest, jwt: Jwt): Session {
     val user = userService.getUserFromToken(jwt) ?: throw Error("User not found")
@@ -36,6 +36,15 @@ class SessionService(
 
     session.code = sessionRequest.code
 
+    sessionRepository.save(session)
+    return session
+  }
+
+  fun toggleSession(jwt: Jwt): Session? {
+    val user = userService.getUserFromToken(jwt) ?: return null
+    val session = sessionRepository.findSessionByUser(user) ?: return null
+
+    session.isOpened = !session.isOpened
     sessionRepository.save(session)
     return session
   }

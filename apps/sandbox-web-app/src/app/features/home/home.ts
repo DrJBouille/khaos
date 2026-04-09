@@ -20,12 +20,16 @@ import {python} from "@codemirror/lang-python";
 import {BlackButton} from "../../shared/buttons/black-button/black-button";
 import {SimpleSelect} from "../../shared/input/simple-select/simple-select.component";
 import {SessionsService} from "../../core/services/sessions-service/sessions-service";
+import {NgIcon} from "@ng-icons/core";
+import {NgClass} from "@angular/common";
 
 @Component({
   selector: 'app-home',
   imports: [
     BlackButton,
-    SimpleSelect
+    SimpleSelect,
+    NgIcon,
+    NgClass
   ],
   templateUrl: './home.html',
   styleUrl: './home.css',
@@ -37,7 +41,7 @@ export class Home implements OnInit, OnDestroy {
   private sessionService = inject(SessionsService);
   private cdr = inject(ChangeDetectorRef);
 
-  private session: Session | undefined;
+  protected session: Session | undefined;
   private sessionSubscription: Subscription | undefined;
   private destroy$ = new Subject<void>();
   private editorChanges$ = new Subject<void>();
@@ -93,7 +97,7 @@ export class Home implements OnInit, OnDestroy {
       catchError(err => {
         if (err.status === 404) {
           const sessionRequest: SessionRequest = {
-            code: this.editor.state.doc.toString()
+            code: "setTimeout(function(){\n    console.log('test');\n}, 4000);"
           };
           return this.sessionService.createSession(sessionRequest);
         }
@@ -157,6 +161,10 @@ export class Home implements OnInit, OnDestroy {
     this.editor.dispatch({
       effects: this.languageCompartment.reconfigure(extension)
     });
+  }
+
+  protected toggleSessionOpening() {
+    this.sessionService.toggleSessions().subscribe(session => this.session = session);
   }
 
   protected readonly STATUS_COLORS = STATUS_COLORS;
