@@ -21,7 +21,11 @@ export class SessionsService {
     return this.http.put<Session>(this.httpURL + `/${id}`, sessionRequest)
   }
 
-  toggleSessions() {
-    return this.http.put<Session>(this.httpURL + '/toggle', {})
+  toggleSessions(id: string) {
+    return this.http.put<Session>(this.httpURL + `/toggle/${id}`, {});
+  }
+
+  getSession(id: string) {
+    return this.http.get<Session>(this.httpURL + `/${id}`);
   }
 }

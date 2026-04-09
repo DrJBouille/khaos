@@ -40,9 +40,11 @@ class SessionService(
     return session
   }
 
-  fun toggleSession(jwt: Jwt): Session? {
+  fun toggleSession(jwt: Jwt, id: UUID): Session? {
     val user = userService.getUserFromToken(jwt) ?: return null
-    val session = sessionRepository.findSessionByUser(user) ?: return null
+    val session = sessionRepository.findById(id).getOrNull() ?: return null
+
+    if (session.user.id != user.id) return null
 
     session.isOpened = !session.isOpened
     sessionRepository.save(session)

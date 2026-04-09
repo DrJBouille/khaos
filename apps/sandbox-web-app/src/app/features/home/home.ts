@@ -22,6 +22,7 @@ import {SimpleSelect} from "../../shared/input/simple-select/simple-select.compo
 import {SessionsService} from "../../core/services/sessions-service/sessions-service";
 import {NgIcon} from "@ng-icons/core";
 import {NgClass} from "@angular/common";
+import {ActivatedRoute} from "@angular/router";
 
 @Component({
   selector: 'app-home',
@@ -40,6 +41,7 @@ export class Home implements OnInit, OnDestroy {
   private taskService = inject(TaskService);
   private sessionService = inject(SessionsService);
   private cdr = inject(ChangeDetectorRef);
+  private route = inject(ActivatedRoute);
 
   protected session: Session | undefined;
   private sessionSubscription: Subscription | undefined;
@@ -92,26 +94,36 @@ export class Home implements OnInit, OnDestroy {
     });
   }
 
-  ngOnInit() {
-    this.sessionSubscription = this.sessionService.getMySession().pipe(
-      catchError(err => {
-        if (err.status === 404) {
-          const sessionRequest: SessionRequest = {
-            code: "setTimeout(function(){\n    console.log('test');\n}, 4000);"
-          };
-          return this.sessionService.createSession(sessionRequest);
-        }
-        return throwError(() => err);
-      })
-    ).subscribe(session => {
-      this.session = session;
+  private setSession = (session: Session) => {
+    this.session = session;
 
-      this.editor = new EditorView({
-        doc: session.code == "" ? "setTimeout(function(){\n    console.log('test');\n}, 4000);" : session.code,
-        extensions: [basicSetup, this.languageCompartment.of(javascript()), this.updateListener],
-        parent: this.editorRef.nativeElement
-      });
+    this.editor = new EditorView({
+      doc: session.code == "" ? "setTimeout(function(){\n    console.log('test');\n}, 4000);" : session.code,
+      extensions: [basicSetup, this.languageCompartment.of(javascript()), this.updateListener],
+      parent: this.editorRef.nativeElement
     });
+
+    this.cdr.detectChanges();
+  }
+
+  ngOnInit() {
+    const sessionId = this.route.snapshot.paramMap.get('id');
+
+    if (sessionId) {
+      this.sessionSubscription = this.sessionService.getSession(sessionId).subscribe(this.setSession)
+    } else {
+      this.sessionSubscription = this.sessionService.getMySession().pipe(
+        catchError(err => {
+          if (err.status === 404) {
+            const sessionRequest: SessionRequest = {
+              code: "setTimeout(function(){\n    console.log('test');\n}, 4000);"
+            };
+            return this.sessionService.createSession(sessionRequest);
+          }
+          return throwError(() => err);
+        })
+      ).subscribe(this.setSession);
+    }
 
     this.editorChanges$.pipe(
       debounceTime(1000),
@@ -164,7 +176,10 @@ export class Home implements OnInit, OnDestroy {
   }
 
   protected toggleSessionOpening() {
-    this.sessionService.toggleSessions().subscribe(session => this.session = session);
+    if (this.session) this.sessionService.toggleSessions(this.session.id).subscribe(session => {
+      this.session = session;
+      this.cdr.detectChanges();
+    });
   }
 
   protected readonly STATUS_COLORS = STATUS_COLORS;

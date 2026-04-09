@@ -59,9 +59,9 @@ class SessionController(
     return ResponseEntity.ok(session)
   }
 
-  @PutMapping("/toggle")
-  fun toggleSession(@AuthenticationPrincipal jwt: Jwt): ResponseEntity<Session> {
-    val session = sessionService.toggleSession(jwt) ?: return ResponseEntity.notFound().build()
+  @PutMapping("/toggle/{sessionId}")
+  fun toggleSession(@AuthenticationPrincipal jwt: Jwt, @PathVariable sessionId: UUID): ResponseEntity<Session> {
+    val session = sessionService.toggleSession(jwt, sessionId) ?: return ResponseEntity.notFound().build()
     return ResponseEntity.ok(session)
   }
 

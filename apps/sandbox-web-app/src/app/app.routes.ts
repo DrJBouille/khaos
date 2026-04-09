@@ -4,7 +4,8 @@ import {Tasks} from "./features/tasks/tasks";
 import {UserResolver} from "./core/services/user-service/user-resolver";
 
 export const appRoutes: Route[] = [
-  { path: '', redirectTo: '/home', pathMatch: 'full' },
-  { path: "home", component: Home, resolve: { user: UserResolver } },
+  { path: '', redirectTo: '/editor', pathMatch: 'full' },
+  { path: "editor/:id", component: Home, resolve: { user: UserResolver } },
+  { path: "editor", component: Home, resolve: { user: UserResolver } },
   { path: "tasks", component: Tasks, resolve: { user: UserResolver } },
 ];

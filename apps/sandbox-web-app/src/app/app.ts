@@ -25,7 +25,7 @@ export class App implements OnInit, OnDestroy {
   protected user: KhaosUser | undefined;
 
   protected routes = [
-    {link: "/home", icon: "heroHome", name: "Home"},
+    {link: "/editor", icon: "heroHome", name: "Home"},
     {link: "/tasks", icon: "heroArchiveBox", name: "Tasks"},
   ];
 
