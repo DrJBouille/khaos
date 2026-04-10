@@ -2,9 +2,6 @@ import {inject, Injectable} from '@angular/core';
 import {HttpClient} from "@angular/common/http";
 import {Task} from "../../../shared/types/tasks/Task";
 import {TaskRequest} from "../../../shared/types/tasks/TaskRequest";
-import {Observable, Subject} from "rxjs";
-import {TaskResultEvent} from "../../../shared/types/tasks/TaskResultEvent";
-import {Client} from "@stomp/stompjs";
 import {environment} from "../../../../environments/environment";
 
 @Injectable({
@@ -12,11 +9,8 @@ import {environment} from "../../../../environments/environment";
 })
 export class TaskService {
   private http = inject(HttpClient);
-  private stompClient: Client | undefined;
 
   private httpURL = `${environment.apiUrl}/tasks`;
-  private wsURL = environment.wsUrl;
-  private connected = false;
 
   createTask(taskRequest: TaskRequest) {
     return this.http.post<Task>(this.httpURL, taskRequest);
@@ -28,46 +22,5 @@ export class TaskService {
 
   getTasks() {
     return this.http.get<Task[]>(this.httpURL);
-  }
-
-
-  connect(): Observable<void> {
-    return new Observable(observer => {
-      if (this.connected) {
-        observer.next();
-        observer.complete();
-        return;
-      }
-
-      this.stompClient = new Client({
-        brokerURL: this.wsURL,
-        onConnect: () => {
-          this.connected = true;
-          observer.next();
-          observer.complete();
-        },
-        onDisconnect: () => { this.connected = false; },
-        onStompError: (frame) => observer.error(frame),
-      });
-      this.stompClient.activate();
-    });
-  }
-
-  subscribeToTask(taskId: string, subject: Subject<TaskResultEvent>) {
-    this.stompClient!.subscribe(`/topic/tasks/${taskId}`, (message) => {
-      const event: TaskResultEvent = JSON.parse(message.body);
-      subject.next(event);
-    });
-  }
-
-  subscribeToAllTasks(subject: Subject<TaskResultEvent>) {
-    this.stompClient!.subscribe(`/topic/tasks`, (message) => {
-      const event: TaskResultEvent = JSON.parse(message.body);
-      subject.next(event);
-    });
-  }
-
-  closeConnection() {
-    this.stompClient?.deactivate();
   }
 }

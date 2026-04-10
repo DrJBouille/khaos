@@ -3,9 +3,9 @@ import {TaskService} from "../../core/services/task-service/task-service";
 import {Task} from "../../shared/types/tasks/Task";
 import {DatePipe, DecimalPipe} from "@angular/common";
 import {STATUS_COLORS} from "../../shared/status/STATUS_COLOR";
-import {Client} from "@stomp/stompjs";
 import {Subject, Subscription} from "rxjs";
 import {TaskResultEvent} from "../../shared/types/tasks/TaskResultEvent";
+import {WebsocketService} from "../../core/services/websocket-service/websocket-service";
 
 @Component({
   selector: 'app-tasks',
@@ -18,6 +18,7 @@ import {TaskResultEvent} from "../../shared/types/tasks/TaskResultEvent";
 })
 export class Tasks implements OnInit, OnDestroy {
   private taskService = inject(TaskService);
+  private websocketService = inject(WebsocketService);
 
   protected tasks = signal<Task[]>([]);
   private taskSubscription: Subscription | undefined;
@@ -26,18 +27,16 @@ export class Tasks implements OnInit, OnDestroy {
     this.taskService.getTasks().subscribe(tasks => this.tasks.set(tasks));
 
     const taskEvents$ = new Subject<TaskResultEvent>();
-    this.taskService.connect().subscribe(() => {
-      this.taskService.subscribeToAllTasks(taskEvents$);
+    this.websocketService.subscribe<TaskResultEvent>("/topic/tasks", taskEvents$);
 
-      this.taskSubscription = taskEvents$.subscribe(event => {
-        this.tasks.update(tasks =>
-          tasks.map(task =>
-            task.id === event.id ?
-              {...task, status: event.status, duration: event.duration} :
-              task
-          )
-        );
-      });
+    this.taskSubscription = taskEvents$.subscribe(event => {
+      this.tasks.update(tasks =>
+        tasks.map(task =>
+          task.id === event.id ?
+            {...task, status: event.status, duration: event.duration} :
+            task
+        )
+      );
     });
   }
 

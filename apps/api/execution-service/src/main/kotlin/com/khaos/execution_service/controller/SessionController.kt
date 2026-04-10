@@ -5,6 +5,7 @@ import com.khaos.execution_service.data.sessions.SessionRequest
 import com.khaos.execution_service.data.sessions.SessionUpdateEvent
 import com.khaos.execution_service.service.SessionService
 import org.springframework.http.ResponseEntity
+import org.springframework.messaging.handler.annotation.DestinationVariable
 import org.springframework.messaging.handler.annotation.MessageMapping
 import org.springframework.messaging.handler.annotation.Payload
 import org.springframework.messaging.simp.SimpMessagingTemplate
@@ -65,8 +66,11 @@ class SessionController(
     return ResponseEntity.ok(session)
   }
 
-  @MessageMapping("/session/{sessionId}")
-  fun sendUpdate(@Payload sessionUpdateEvent: SessionUpdateEvent) {
-    messagingTemplate.convertAndSend("/topic/session/${sessionUpdateEvent.id}", sessionUpdateEvent.message)
+  @MessageMapping("/sessions/{sessionId}")
+  fun sendUpdate(
+    @DestinationVariable sessionId: String,
+    @Payload sessionUpdateEvent: SessionUpdateEvent
+  ) {
+    messagingTemplate.convertAndSend("/topic/sessions/$sessionId", sessionUpdateEvent)
   }
 }
