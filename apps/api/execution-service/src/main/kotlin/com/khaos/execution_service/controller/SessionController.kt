@@ -65,12 +65,4 @@ class SessionController(
     val session = sessionService.toggleSession(jwt, sessionId) ?: return ResponseEntity.notFound().build()
     return ResponseEntity.ok(session)
   }
-
-  @MessageMapping("/sessions/{sessionId}")
-  fun sendUpdate(
-    @DestinationVariable sessionId: String,
-    @Payload sessionUpdateEvent: SessionUpdateEvent
-  ) {
-    messagingTemplate.convertAndSend("/topic/sessions/$sessionId", sessionUpdateEvent)
-  }
 }

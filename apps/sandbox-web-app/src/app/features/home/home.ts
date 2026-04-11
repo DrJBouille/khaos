@@ -11,7 +11,7 @@ import {TaskService} from "../../core/services/task-service/task-service";
 import {Compartment} from "@codemirror/state";
 import {EditorView} from "@codemirror/view";
 import {STATUS, STATUS_COLORS} from "../../shared/status/STATUS_COLOR";
-import {catchError, debounceTime, EMPTY, Subject, Subscription, switchMap, throwError} from "rxjs";
+import {catchError, Subject, Subscription, throwError} from "rxjs";
 import {TaskRequest} from "../../shared/types/tasks/TaskRequest";
 import {TaskResultEvent} from "../../shared/types/tasks/TaskResultEvent";
 import {basicSetup} from "codemirror";
@@ -24,6 +24,9 @@ import {NgIcon} from "@ng-icons/core";
 import {NgClass} from "@angular/common";
 import {ActivatedRoute} from "@angular/router";
 import {WebsocketService} from "../../core/services/websocket-service/websocket-service";
+import * as Y from 'yjs';
+import { yCollab } from 'y-codemirror.next';
+import {WebrtcProvider} from "y-webrtc";
 
 @Component({
   selector: 'app-home',
@@ -37,8 +40,6 @@ import {WebsocketService} from "../../core/services/websocket-service/websocket-
   styleUrl: './home.css',
 })
 export class Home implements OnInit, OnDestroy {
-  protected title = 'sandbox-web-app';
-
   private taskService = inject(TaskService);
   private websocketService = inject(WebsocketService);
   private sessionService = inject(SessionsService);
@@ -47,24 +48,19 @@ export class Home implements OnInit, OnDestroy {
 
   protected session: Session | undefined;
   private sessionSubscription: Subscription | undefined;
-  private destroy$ = new Subject<void>();
-  private editorChanges$ = new Subject<void>();
   protected saveStatus = 'Saved';
-  private isRemoteUpdate = false;
+
+  private user: KhaosUser | undefined;
+
+  private ydoc!: Y.Doc;
+  private provider!: WebrtcProvider;
+  private ytext!: Y.Text;
 
   protected languages = ["JAVASCRIPT", "PYTHON", "JAVA"];
 
   private languageCompartment = new Compartment();
   @ViewChild('editor', {static: true}) editorRef!: ElementRef;
   editor!: EditorView;
-  updateListener = EditorView.updateListener.of((update) => {
-    if (update.docChanged) {
-      if (this.isRemoteUpdate) return;
-      this.editorChanges$.next();
-      this.saveStatus = 'Saving...';
-      this.cdr.detectChanges();
-    }
-  });
 
   protected error = "";
   protected output = "";
@@ -99,33 +95,61 @@ export class Home implements OnInit, OnDestroy {
   private setSession = (session: Session) => {
     this.session = session;
 
+    this.ydoc = new Y.Doc();
+    this.ytext = this.ydoc.getText('codemirror');
+
+    this.provider = new WebrtcProvider(session.id, this.ydoc, {
+      signaling: ['ws://localhost:4444']
+    });
+
+    const initContent = () => {
+      if (this.ytext.length === 0 && session.code) {
+        this.ytext.insert(0, session.code);
+      }
+    };
+
+    if (this.provider.connected) {
+      initContent()
+    } else {
+      const onSync = (arg0: { synced: boolean }) => {
+        if (arg0.synced) {
+          initContent();
+          this.provider.off('synced', onSync)
+        }
+      };
+
+      this.provider.on('synced', onSync);
+
+      setTimeout(() => {
+        if (this.ytext.length === 0 && session.code) {
+          this.ytext.insert(0, session.code);
+        }
+      }, 1500);
+    }
+
+    const randomColor = () => '#' + Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, '0');
+
+    const awareness = this.provider.awareness
+    awareness.setLocalStateField('user', {
+      name: this.user?.username,
+      color: randomColor(),
+    })
+
     this.editor = new EditorView({
-      doc: session.code == "" ? "setTimeout(function(){\n    console.log('test');\n}, 4000);" : session.code,
-      extensions: [basicSetup, this.languageCompartment.of(javascript()), this.updateListener],
+      extensions: [
+        basicSetup,
+        this.languageCompartment.of(javascript()),
+        yCollab(this.ytext, this.provider.awareness)
+      ],
       parent: this.editorRef.nativeElement
     });
 
-    const sessionEvents$ = new Subject<SessionUpdateEvent>();
-    this.websocketService.subscribe<SessionUpdateEvent>(`/topic/sessions/${session.id}`, sessionEvents$);
-
-    this.sessionSubscription = sessionEvents$.subscribe(event => {
-      this.isRemoteUpdate = true;
-
-      this.editor.dispatch({
-        changes: {
-          from: 0,
-          to: this.editor.state.doc.length,
-          insert: event.message
-        }
-      });
-
-      this.isRemoteUpdate = false;
-    });
 
     this.cdr.detectChanges();
-  }
+  };
 
   ngOnInit() {
+    this.user = this.route.snapshot.data['user'] as KhaosUser;
     const sessionId = this.route.snapshot.paramMap.get('id');
 
     if (sessionId) {
@@ -143,40 +167,19 @@ export class Home implements OnInit, OnDestroy {
         })
       ).subscribe(this.setSession);
     }
-
-    this.editorChanges$.pipe(
-      debounceTime(1000),
-      switchMap(() => {
-        if (!this.session) return EMPTY;
-
-        const sessionRequest: SessionRequest = {
-          code: this.editor.state.doc.toString()
-        };
-
-        const sessionUpdateEvent: SessionUpdateEvent = {
-          id: this.session.id,
-          message: this.editor.state.doc.toString()
-        };
-
-        this.websocketService.send(`/app/sessions/${this.session.id}`, sessionUpdateEvent);
-        return this.sessionService.updateSession(this.session.id, sessionRequest);
-      })
-    ).subscribe({next: () => {
-        this.saveStatus = 'Saved';
-        this.cdr.detectChanges();
-    }});
   }
 
   ngOnDestroy() {
     if (this.session) {
-      const sessionRequest: SessionRequest = {
-        code: this.editor.state.doc.toString()
-      };
-      this.sessionService.updateSession(this.session.id, sessionRequest).subscribe();
+      const code = this.ytext.toString();
+      this.sessionService.updateSession(this.session.id, {code}).subscribe();
     }
 
     this.taskSubscription?.unsubscribe();
     this.sessionSubscription?.unsubscribe();
+
+    this.provider?.destroy();
+    this.ydoc?.destroy();
   }
 
   protected changeLanguage(lang: string) {
@@ -205,6 +208,30 @@ export class Home implements OnInit, OnDestroy {
       this.session = session;
       this.cdr.detectChanges();
     });
+  }
+
+  private base64ToUint8(base64: string): Uint8Array {
+    console.log('base64 reçu:', base64.substring(0, 50));
+    console.log('longueur:', base64.length);
+    console.log('caractères invalides:', base64.match(/[^A-Za-z0-9+/=_-]/g));
+    // Corriger le padding si manquant
+    const padded = base64.padEnd(base64.length + (4 - base64.length % 4) % 4, '=');
+    const binary = atob(padded);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    return bytes;
+  }
+
+  private uint8ToBase64(u8: Uint8Array): string {
+    let binary = '';
+    // Traiter par chunks pour éviter le stack overflow
+    const chunkSize = 0x8000;
+    for (let i = 0; i < u8.length; i += chunkSize) {
+      binary += String.fromCharCode(...u8.subarray(i, i + chunkSize));
+    }
+    return btoa(binary);
   }
 
   protected readonly STATUS_COLORS = STATUS_COLORS;

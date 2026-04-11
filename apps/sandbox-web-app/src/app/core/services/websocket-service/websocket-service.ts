@@ -44,7 +44,6 @@ export class WebsocketService {
 
   subscribe<T>(destination: string, subject: Subject<T>) {
     this.stompClient!.subscribe(destination, (message) => {
-      console.log(message.body)
       const event: T = JSON.parse(message.body);
       subject.next(event);
     });

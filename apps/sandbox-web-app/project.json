@@ -64,6 +64,22 @@
     },
     "serve": {
       "continuous": true,
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "npx nx run sandbox-web-app:serve-angular",
+          "npx y-webrtc"
+        ],
+        "parallel": true
+      },
+      "configurations": {
+        "production": {},
+        "development": {}
+      },
+      "defaultConfiguration": "development"
+    },
+    "serve-angular": {
+      "continuous": true,
       "executor": "@angular/build:dev-server",
       "configurations": {
         "production": {
